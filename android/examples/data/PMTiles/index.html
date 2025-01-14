@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://www.maplibre.org/maplibre-native/android/examples/camera/max-min-zoom/">
+        <link rel="canonical" href="https://www.maplibre.org/maplibre-native/android/examples/data/PMTiles/">
       
       
-        <link rel="prev" href="../lat-lng-bounds/">
+        <link rel="prev" href="../../camera/zoom-methods/">
       
       
-        <link rel="next" href="../move-map-pixels/">
+        <link rel="next" href="../../styling/animated-image-source/">
       
       
       <link rel="icon" href="https://maplibre.org/favicon.ico">
@@ -24,7 +24,7 @@
     
     
       
-        <title>Max/Min Zoom - MapLibre Android Examples</title>
+        <title>PMTiles - MapLibre Android Examples</title>
       
     
     
@@ -61,11 +61,11 @@
       
         <meta  property="og:type"  content="website" >
       
-        <meta  property="og:title"  content="Max/Min Zoom - MapLibre Android Examples" >
+        <meta  property="og:title"  content="PMTiles - MapLibre Android Examples" >
       
         <meta  property="og:description"  content="MapLibre Android Examples" >
       
-        <meta  property="og:image"  content="https://www.maplibre.org/maplibre-native/android/examples/assets/images/social/camera/max-min-zoom.png" >
+        <meta  property="og:image"  content="https://www.maplibre.org/maplibre-native/android/examples/assets/images/social/data/PMTiles.png" >
       
         <meta  property="og:image:type"  content="image/png" >
       
@@ -73,15 +73,15 @@
       
         <meta  property="og:image:height"  content="630" >
       
-        <meta  property="og:url"  content="https://www.maplibre.org/maplibre-native/android/examples/camera/max-min-zoom/" >
+        <meta  property="og:url"  content="https://www.maplibre.org/maplibre-native/android/examples/data/PMTiles/" >
       
         <meta  name="twitter:card"  content="summary_large_image" >
       
-        <meta  name="twitter:title"  content="Max/Min Zoom - MapLibre Android Examples" >
+        <meta  name="twitter:title"  content="PMTiles - MapLibre Android Examples" >
       
         <meta  name="twitter:description"  content="MapLibre Android Examples" >
       
-        <meta  name="twitter:image"  content="https://www.maplibre.org/maplibre-native/android/examples/assets/images/social/camera/max-min-zoom.png" >
+        <meta  name="twitter:image"  content="https://www.maplibre.org/maplibre-native/android/examples/assets/images/social/data/PMTiles.png" >
       
     
     
@@ -104,7 +104,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#maxmin-zoom" class="md-skip">
+        <a href="#pmtiles" class="md-skip">
           Skip to content
         </a>
       
@@ -139,7 +139,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Max/Min Zoom
+              PMTiles
             
           </span>
         </div>
@@ -501,8 +501,6 @@
       
   
   
-    
-  
   
   
     
@@ -514,11 +512,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
         
           
           <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
@@ -532,7 +530,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             Camera
@@ -546,7 +544,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../animation-types/" class="md-nav__link">
+      <a href="../../camera/animation-types/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -567,7 +565,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../animator-animation/" class="md-nav__link">
+      <a href="../../camera/animator-animation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -588,7 +586,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cameraposition/" class="md-nav__link">
+      <a href="../../camera/cameraposition/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -609,7 +607,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../gesture-detector/" class="md-nav__link">
+      <a href="../../camera/gesture-detector/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -630,7 +628,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../lat-lng-bounds/" class="md-nav__link">
+      <a href="../../camera/lat-lng-bounds/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -648,30 +646,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Max/Min Zoom
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../camera/max-min-zoom/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -680,35 +658,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#bonus-add-click-listener" class="md-nav__link">
-    <span class="md-ellipsis">
-      Bonus: Add Click Listener
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -721,7 +670,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../move-map-pixels/" class="md-nav__link">
+      <a href="../../camera/move-map-pixels/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -742,7 +691,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../zoom-methods/" class="md-nav__link">
+      <a href="../../camera/zoom-methods/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -767,8 +716,10 @@
       
   
   
+    
   
   
+  
     
     
     
@@ -778,11 +729,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
         
           
           <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
@@ -796,7 +747,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             Data
@@ -807,10 +758,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../data/PMTiles/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -819,6 +779,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -1082,7 +1043,7 @@
                   
 
   
-    <a href="https://github.com/maplibre/maplibre-native/edit/main/platform/android/docs/camera/max-min-zoom.md" title="Edit this page" class="md-content__button md-icon">
+    <a href="https://github.com/maplibre/maplibre-native/edit/main/platform/android/docs/data/PMTiles.md" title="Edit this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -1090,30 +1051,14 @@
   
 
 
-<h1 id="maxmin-zoom">Max/Min Zoom</h1>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>You can find the full source code of this example in <a href="https://github.com/maplibre/maplibre-native/blob/main/platform/android/MapLibreAndroidTestApp/src/main/java/org/maplibre/android/testapp/activity/camera/MaxMinZoomActivity.kt"><code>MaxMinZoomActivity.kt</code></a> of the MapLibreAndroidTestApp.</p>
-</div>
-<p>This example shows how to configure a maximum and a minimum zoom level.</p>
-<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">maplibreMap</span><span class="p">.</span><span class="na">setMinZoomPreference</span><span class="p">(</span><span class="m">3.0</span><span class="p">)</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">maplibreMap</span><span class="p">.</span><span class="na">setMaxZoomPreference</span><span class="p">(</span><span class="m">5.0</span><span class="p">)</span>
+<h1 id="pmtiles">PMTiles</h1>
+<p>Starting MapLibre Android 11.7.0, using <a href="https://docs.protomaps.com/pmtiles/">PMTiles</a> as a data source is supported. You can prefix your vector tile source with <code>pmtiles://</code> to load a PMTiles file. The rest of the URL continue with be <code>https://</code> to load a remote PMTiles file, <code>asset://</code> to load an asset or <code>file://</code> to load a local PMTiles file.</p>
+<p>Oliver Wipfli has made a style available that combines a <a href="">Protomaps</a> basemap togehter with Foursquare's POI dataset. It is available in the <a href="https://github.com/wipfli/foursquare-os-places-pmtiles">wipfli/foursquare-os-places-pmtiles</a> repository on GitHub. The style to use is</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>https://raw.githubusercontent.com/wipfli/foursquare-os-places-pmtiles/refs/heads/main/style.json
 </span></code></pre></div>
-<h2 id="bonus-add-click-listener">Bonus: Add Click Listener</h2>
-<p>As a bonus, this example also shows how you can define a click listener to the map.</p>
-<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">maplibreMap</span><span class="p">.</span><span class="na">addOnMapClickListener</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="o">::</span><span class="n">maplibreMap</span><span class="p">.</span><span class="na">isInitialized</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">        </span><span class="n">maplibreMap</span><span class="p">.</span><span class="na">setStyle</span><span class="p">(</span><span class="n">Style</span><span class="p">.</span><span class="na">Builder</span><span class="p">().</span><span class="na">fromUri</span><span class="p">(</span><span class="n">TestStyles</span><span class="p">.</span><span class="na">AMERICANA</span><span class="p">))</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="p">}</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="kc">true</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">}</span>
-</span></code></pre></div>
-<p>You can remove a click listener again with <code>MapLibreMap.removeOnMapClickListener</code>. To use this API you need to assign the click listener to a variable, since you need to pass the listener to that method.</p>
+<p>The neat thing about this style is that it only uses PMTiles vector sources. PMTiles can be hosted with a relatively simple file server (or file hosting service) instead of a more complex specialized tile server.</p>
 <figure>
-<video controls="controls" poster="https://dwxvn1oqw6mkc.cloudfront.net/android-documentation-resources/max_min_zoom_thumbnail.jpg" width="250">
-    <source src="https://dwxvn1oqw6mkc.cloudfront.net/android-documentation-resources/max_min_zoom.mp4" />
-  </video>
-  <function define_env.\<locals>.openmaptiles_caption at 0x7f40d1e3fb00>
+  <img alt="Screenshot of PMTiles based style using Protomaps basemap with Foursquare POIs" src="https://dwxvn1oqw6mkc.cloudfront.net/android-documentation-resources/pmtiles-demo.png" width="300" />
 </figure>
 
 
