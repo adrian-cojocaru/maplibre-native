@@ -92,6 +92,28 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
 
     assert(updateParameters);
 
+    context.renderingStats().bufferUpdates = 0;
+    context.renderingStats().indexBufferUpdates = 0;
+    context.renderingStats().vertexBufferUpdates = 0;
+    context.renderingStats().numUniformUpdates = 0;
+
+    context.renderingStats().bufferUpdateBytes = 0;
+    context.renderingStats().indexUpdateBytes = 0;
+    context.renderingStats().vertexUpdateBytes = 0;
+    context.renderingStats().uniformUpdateBytes = 0;
+
+    context.renderingStats().bufferSkip = 0;
+    context.renderingStats().uniformSkip = 0;
+    context.renderingStats().vertexSkip = 0;
+    context.renderingStats().indexSkip = 0;
+
+    context.renderingStats().bufferSkipBytes = 0;
+    context.renderingStats().uniformSkipBytes = 0;
+    context.renderingStats().vertexSkipBytes = 0;
+    context.renderingStats().indexSkipBytes = 0;
+
+    context.renderingStats().vkBufferedUpdates = 0;
+
 #if MLN_RENDER_BACKEND_METAL
 #if MLN_CREATE_AUTORELEASEPOOL
     NS::SharedPtr pool = NS::TransferPtr(NS::AutoreleasePool::alloc()->init());
@@ -469,6 +491,39 @@ void Renderer::Impl::render(const RenderTree& renderTree, const std::shared_ptr<
         renderTreeParameters.needsRepaint,
         renderTreeParameters.placementChanged,
         context.renderingStats());
+
+#if 0
+    auto& stats = context.renderingStats();
+
+    auto shorten = [](const auto value) {
+        constexpr auto kb = 1024;
+        constexpr auto mb = kb * 1024;
+        constexpr auto format = "{:5d}";
+
+        if (value >= mb) {
+            return std::format(format, value / mb) + " MB";
+        } else if (value >= kb) {
+            return std::format(format, value / kb) + " KB";
+        } else {
+            return std::format(format, value) + " B ";
+        }
+    };
+
+    Log::Error(Event::Render,
+       std::format("Buffer  total {:5d} {:s} updated {:5d} {:s} skipped {:5d} {:s} ", stats.numBuffers,          shorten(stats.memBuffers),          stats.bufferUpdates,        shorten(stats.bufferUpdateBytes),  stats.bufferSkip,   shorten(stats.bufferSkipBytes)) +
+       std::format("Uniform total {:5d} {:s} updated {:5d} {:s} skipped {:5d} {:s} ", stats.numUniformBuffers,   shorten(stats.memUniformBuffers),   stats.numUniformUpdates,    shorten(stats.uniformUpdateBytes), stats.uniformSkip,  shorten(stats.uniformSkipBytes)) +
+       std::format("Vertex  total {:5d} {:s} updated {:5d} {:s} skipped {:5d} {:s} ", stats.numVertexBuffers,    shorten(stats.memVertexBuffers),    stats.vertexBufferUpdates,  shorten(stats.vertexUpdateBytes),  stats.vertexSkip,   shorten(stats.vertexSkipBytes)) +
+       std::format("Index   total {:5d} {:s} updated {:5d} {:s} skipped {:5d} {:s} ", stats.numIndexBuffers,     shorten(stats.memIndexBuffers),     stats.indexBufferUpdates,   shorten(stats.indexUpdateBytes),   stats.indexSkip,    shorten(stats.indexSkipBytes)) +
+       std::format("{:3d}", stats.vkBufferedUpdates)
+    );
+
+    Log::Error(Event::OpenGL,
+               std::format("\nBuffer  total {:5d} {:s} updated {:5d} {:s} skipped {:5d} {:s} ", stats.numBuffers,          shorten(stats.memBuffers),          stats.bufferUpdates,        shorten(stats.bufferUpdateBytes),   stats.bufferSkip,   shorten(stats.bufferSkipBytes)) +
+               std::format("\nUniform total {:5d} {:s} updated {:5d} {:s} skipped {:5d} {:s} ", stats.numUniformBuffers,   shorten(stats.memUniformBuffers),   stats.numUniformUpdates,    shorten(stats.uniformUpdateBytes),  stats.uniformSkip,  shorten(stats.uniformSkipBytes)) +
+               std::format("\nVertex  total {:5d} {:s} updated {:5d} {:s} skipped {:5d} {:s} ", stats.numVertexBuffers,    shorten(stats.memVertexBuffers),    stats.vertexBufferUpdates,  shorten(stats.vertexUpdateBytes), stats.vertexSkip,   shorten(stats.vertexSkipBytes)) +
+               std::format("\nIndex   total {:5d} {:s} updated {:5d} {:s} skipped {:5d} {:s} ", stats.numIndexBuffers,     shorten(stats.memIndexBuffers),     stats.indexBufferUpdates,   shorten(stats.indexBufferUpdates),  stats.indexSkip,    shorten(stats.indexSkipBytes))
+    );
+#endif
 
     if (!renderTreeParameters.loaded) {
         renderState = RenderState::Partial;

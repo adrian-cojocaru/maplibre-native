@@ -107,7 +107,7 @@ BufferResource::BufferResource(
     if (isValid()) {
         auto& stats = context.renderingStats();
         stats.numBuffers++;
-        stats.memBuffers += totalSize;
+        stats.memBuffers += size;
         stats.totalBuffers++;
 
         stats.totalBufferObjs++;
@@ -131,7 +131,7 @@ BufferResource::~BufferResource() noexcept {
         context.renderingStats().numBuffers--;
 
         if (bufferWindowSize > 0) {
-            context.renderingStats().memBuffers -= bufferWindowSize * context.getBackend().getMaxFrames();
+            context.renderingStats().memBuffers -= size;
         } else {
             context.renderingStats().memBuffers -= size;
         }
@@ -148,10 +148,6 @@ BufferResource BufferResource::clone() const {
 
 BufferResource& BufferResource::operator=(BufferResource&& other) noexcept {
     assert(&context == &other.context);
-    if (isValid()) {
-        context.renderingStats().numBuffers--;
-        context.renderingStats().memBuffers -= size;
-    }
 
     size = other.size;
     usage = other.usage;
@@ -173,6 +169,21 @@ void BufferResource::update(const void* newData, std::size_t updateSize, std::si
     uint8_t* data = static_cast<uint8_t*>(bufferAllocation->mappedBuffer) + getVulkanBufferOffset() + offset;
 
     if (memcmp(data, newData, updateSize) == 0) {
+        auto& stats = context.renderingStats();
+
+        stats.bufferSkip++;
+        stats.bufferSkipBytes += updateSize;
+
+        if (usage & VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT || usage & VK_BUFFER_USAGE_STORAGE_BUFFER_BIT) {
+            stats.uniformSkip++;
+            stats.uniformSkipBytes += updateSize;
+        } else if (usage & VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) {
+            stats.vertexSkip++;
+            stats.vertexSkipBytes += updateSize;
+        } else if (usage & VK_BUFFER_USAGE_INDEX_BUFFER_BIT) {
+            stats.indexSkip++;
+            stats.indexSkipBytes += updateSize;
+        }
         return;
     }
 
@@ -183,6 +194,17 @@ void BufferResource::update(const void* newData, std::size_t updateSize, std::si
     stats.bufferUpdates++;
     stats.bufferObjUpdates++;
     version++;
+
+    if (usage & VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT || usage & VK_BUFFER_USAGE_STORAGE_BUFFER_BIT) {
+        stats.numUniformUpdates++;
+        stats.uniformUpdateBytes += updateSize;
+    } else if (usage & VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) {
+        stats.vertexBufferUpdates++;
+        stats.vertexUpdateBytes += updateSize;
+    } else if (usage & VK_BUFFER_USAGE_INDEX_BUFFER_BIT) {
+        stats.indexBufferUpdates++;
+        stats.indexUpdateBytes += updateSize;
+    }
 
     if (version == std::numeric_limits<VersionType>::max()) {
         version = VersionType{} + 1;
@@ -240,6 +262,8 @@ void BufferResource::updateVulkanBuffer(const int8_t destination, const uint8_t 
         std::memcpy(dstData, srcData, size);
 
         bufferWindowVersions[destination] = bufferWindowVersions[source];
+
+        context.renderingStats().vkBufferedUpdates++;
     }
 }
 

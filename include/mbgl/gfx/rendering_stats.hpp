@@ -58,11 +58,13 @@ struct RenderingStats {
 
     /// Number of active index buffers
     int numIndexBuffers = 0;
+    int indexBufferUpdates = 0;
     /// Sum of index buffers update sizes
     std::size_t indexUpdateBytes = 0;
 
     /// Number of active vertex buffers
     int numVertexBuffers = 0;
+    int vertexBufferUpdates = 0;
     /// Sum of vertex buffers update sizes
     std::size_t vertexUpdateBytes = 0;
 
@@ -88,6 +90,18 @@ struct RenderingStats {
     int stencilClears = 0;
     /// Number of stencil buffer updates
     int stencilUpdates = 0;
+
+    int bufferSkip = 0;
+    int uniformSkip = 0;
+    int vertexSkip = 0;
+    int indexSkip = 0;
+
+    std::size_t bufferSkipBytes = 0;
+    std::size_t uniformSkipBytes = 0;
+    std::size_t vertexSkipBytes = 0;
+    std::size_t indexSkipBytes = 0;
+
+    int vkBufferedUpdates = 0;
 
     RenderingStats& operator+=(const RenderingStats&);
 

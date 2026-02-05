@@ -35,8 +35,8 @@ void UniformBuffer::update(const void* data, std::size_t dataSize) {
         return;
     }
 
-    buffer.getContext().renderingStats().numUniformUpdates++;
-    buffer.getContext().renderingStats().uniformUpdateBytes += dataSize;
+    // buffer.getContext().renderingStats().numUniformUpdates++;
+    // buffer.getContext().renderingStats().uniformUpdateBytes += dataSize;
     buffer.update(data, dataSize, /*offset=*/0);
 }
 
