@@ -268,6 +268,29 @@ void updateTileAttributes(const SymbolBucket::Buffer& buffer,
                           const SymbolPaintProperties::PossiblyEvaluated& evaluated,
                           gfx::VertexAttributeArray& attribs,
                           StringIDSetsPair* propertiesAsUniforms) {
+#ifdef USE_SYMBOL_POS_BUFFER
+    if (const auto& attr = attribs.set(idSymbolPosOffsetVertexAttribute)) {
+        attr->setSharedRawData(buffer.sharedPosVertices,
+                               offsetof(SymbolLayoutPosVertex, a1),
+                               /*vertexOffset=*/0,
+                               sizeof(SymbolLayoutPosVertex),
+                               gfx::AttributeDataType::Short4);
+    }
+    if (const auto& attr = attribs.set(idSymbolDataVertexAttribute)) {
+        attr->setSharedRawData(buffer.sharedDataVertices,
+                               offsetof(SymbolLayoutDataVertex, a1),
+                               /*vertexOffset=*/0,
+                               sizeof(SymbolLayoutDataVertex),
+                               gfx::AttributeDataType::UShort4);
+    }
+    if (const auto& attr = attribs.set(idSymbolPixelOffsetVertexAttribute)) {
+        attr->setSharedRawData(buffer.sharedDataVertices,
+                               offsetof(SymbolLayoutDataVertex, a2),
+                               /*vertexOffset=*/0,
+                               sizeof(SymbolLayoutDataVertex),
+                               gfx::AttributeDataType::Short4);
+    }
+#else
     if (const auto& attr = attribs.set(idSymbolPosOffsetVertexAttribute)) {
         attr->setSharedRawData(buffer.sharedVertices,
                                offsetof(SymbolLayoutVertex, a1),
@@ -289,6 +312,7 @@ void updateTileAttributes(const SymbolBucket::Buffer& buffer,
                                sizeof(SymbolLayoutVertex),
                                gfx::AttributeDataType::Short4);
     }
+#endif
 
     if (const auto& attr = attribs.set(idSymbolProjectedPosVertexAttribute)) {
         using Vertex = gfx::Vertex<SymbolDynamicLayoutAttributes>;
@@ -307,6 +331,9 @@ void updateTileAttributes(const SymbolBucket::Buffer& buffer,
                                gfx::AttributeDataType::Float);
     }
 
+    // TODO find paintProps.textBinders.sharedVector updateds
+    // TODO move <TextOpacity, TextColor, TextHaloColor, TextHaloWidth, TextHaloBlur>
+    // to a block vector
     if (isText) {
         attribs.readDataDrivenPaintProperties<TextOpacity, TextColor, TextHaloColor, TextHaloWidth, TextHaloBlur>(
             paintProps.textBinders, evaluated, propertiesAsUniforms, idSymbolOpacityVertexAttribute);
@@ -332,7 +359,12 @@ void updateTileDrawable(gfx::Drawable& drawable,
     drawData.bucketVariablePlacement = bucket.hasVariablePlacement;
 
     const auto& buffer = isText ? bucket.text : (sdfIcons ? bucket.sdfIcon : bucket.icon);
+
+#ifdef USE_SYMBOL_POS_BUFFER
+    const auto vertexCount = buffer.sharedPosVertices->elements();
+#else
     const auto vertexCount = buffer.vertices().elements();
+#endif
 
     drawable.setVertices({}, vertexCount, gfx::AttributeDataType::Short4);
 
@@ -644,7 +676,11 @@ void RenderSymbolLayer::update(gfx::ShaderRegistry& shaders,
             if (sortFeaturesByKey) {
                 // Features need to be rendered in a specific order, so we add each segment individually
                 for (const auto& segment : buffer.segments) {
+#ifdef USE_SYMBOL_POS_BUFFER
+                    assert(segment.vertexOffset + segment.vertexLength <= buffer.sharedPosVertices->elements());
+#else
                     assert(segment.vertexOffset + segment.vertexLength <= buffer.vertices().elements());
+#endif
                     renderableSegments.emplace(SegmentGroup{
                         .renderable = {segment, tile, renderData, bucketPaintProperties, segment.sortKey, type},
                         .segments = emptySegmentVector});
@@ -719,7 +755,11 @@ void RenderSymbolLayer::update(gfx::ShaderRegistry& shaders,
 
         auto& tileInfo = tileCache[tile.id];
 
+#ifdef USE_SYMBOL_POS_BUFFER
+        const auto vertexCount = buffer.sharedPosVertices->elements();
+#else
         const auto vertexCount = buffer.vertices().elements();
+#endif
 
         propertiesAsUniforms.first.clear();
         propertiesAsUniforms.second.clear();

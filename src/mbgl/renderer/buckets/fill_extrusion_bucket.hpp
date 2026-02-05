@@ -9,13 +9,21 @@
 #include <mbgl/shaders/segment.hpp>
 #include <mbgl/style/layers/fill_extrusion_layer_properties.hpp>
 
+#define USE_FILL_EXTRUSION_POS_BUFFER
+
 namespace mbgl {
 
 class BucketParameters;
 class RenderFillExtrusionLayer;
 
 using FillExtrusionBinders = PaintPropertyBinders<style::FillExtrusionPaintProperties::DataDrivenProperties>;
+
+#ifdef USE_FILL_EXTRUSION_POS_BUFFER
+using FillExtrusionLayoutPosVertex = gfx::Vertex<TypeList<attributes::pos>>;
+using FillExtrusionLayoutNormalVertex = gfx::Vertex<TypeList<attributes::normal_ed>>;
+#else
 using FillExtrusionLayoutVertex = gfx::Vertex<TypeList<attributes::pos, attributes::normal_ed>>;
+#endif
 
 class FillExtrusionBucket final : public Bucket {
 public:
@@ -43,6 +51,28 @@ public:
 
     void update(const FeatureStates&, const GeometryTileLayer&, const std::string&, const ImagePositions&) override;
 
+#ifdef USE_FILL_EXTRUSION_POS_BUFFER
+    static FillExtrusionLayoutPosVertex layoutPosVertex(Point<int16_t> p) {
+        return FillExtrusionLayoutPosVertex{{ p.x, p.y }};
+    }
+
+    static FillExtrusionLayoutNormalVertex layoutNormalVertex(
+        double nx, double ny, double nz, unsigned short t, uint16_t e) {
+        const auto factor = pow(2, 13);
+
+        return FillExtrusionLayoutNormalVertex{
+            { { // Multiply normal vector components by 2^13 to pack them into
+                // integers We pack a bool (`t`) into the x component indicating
+                // whether it is an upper or lower vertex
+                static_cast<int16_t>(floor(nx * factor) * 2 + t),
+                static_cast<int16_t>(ny * factor * 2),
+                static_cast<int16_t>(nz * factor * 2),
+                // The edgedistance attribute is used for wrapping fill_extrusion patterns
+                static_cast<int16_t>(e)
+            } }};
+    }
+
+#else
     static FillExtrusionLayoutVertex layoutVertex(
         Point<int16_t> p, double nx, double ny, double nz, unsigned short t, uint16_t e) {
         const auto factor = pow(2, 13);
@@ -57,14 +87,25 @@ public:
                                            // The edgedistance attribute is used for wrapping fill_extrusion patterns
                                            static_cast<int16_t>(e)}}};
     }
+#endif
 
     static std::array<float, 3> lightColor(const EvaluatedLight&);
     static std::array<float, 3> lightPosition(const EvaluatedLight&, const TransformState&);
     static float lightIntensity(const EvaluatedLight&);
 
+#ifdef USE_FILL_EXTRUSION_POS_BUFFER
+    using PosVertexVector = gfx::VertexVector<FillExtrusionLayoutPosVertex>;
+    const std::shared_ptr<PosVertexVector> sharedPosVertices = std::make_shared<PosVertexVector>();
+    PosVertexVector& posVertices = *sharedPosVertices;
+
+    using NormalVertexVector = gfx::VertexVector<FillExtrusionLayoutNormalVertex>;
+    const std::shared_ptr<NormalVertexVector> sharedNormalVertices = std::make_shared<NormalVertexVector>();
+    NormalVertexVector& normalVertices = *sharedNormalVertices;
+#else
     using VertexVector = gfx::VertexVector<FillExtrusionLayoutVertex>;
     const std::shared_ptr<VertexVector> sharedVertices = std::make_shared<VertexVector>();
     VertexVector& vertices = *sharedVertices;
+#endif
 
     using TriangleIndexVector = gfx::IndexVector<gfx::Triangles>;
     const std::shared_ptr<TriangleIndexVector> sharedTriangles = std::make_shared<TriangleIndexVector>();

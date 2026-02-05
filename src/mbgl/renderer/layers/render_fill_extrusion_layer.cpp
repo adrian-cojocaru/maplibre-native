@@ -191,7 +191,12 @@ void RenderFillExtrusionLayer::update(gfx::ShaderRegistry& shaders,
             colorBuilder->clearTweakers();
         }
 
+#ifdef USE_FILL_EXTRUSION_POS_BUFFER
+        const auto vertexCount = bucket.posVertices.elements();
+#else
         const auto vertexCount = bucket.vertices.elements();
+#endif
+
         auto& binders = bucket.paintPropertyBinders.at(getID());
 
         // If we already have drawables for this tile, update them.
@@ -275,6 +280,22 @@ void RenderFillExtrusionLayer::update(gfx::ShaderRegistry& shaders,
             }
         }
 
+#ifdef USE_FILL_EXTRUSION_POS_BUFFER
+        if (const auto& attr = vertexAttrs->set(idFillExtrusionPosVertexAttribute)) {
+            attr->setSharedRawData(bucket.sharedPosVertices,
+                                   offsetof(FillExtrusionLayoutPosVertex, a1),
+                                   /*vertexOffset=*/0,
+                                   sizeof(FillExtrusionLayoutPosVertex),
+                                   gfx::AttributeDataType::Short2);
+        }
+        if (const auto& attr = vertexAttrs->set(idFillExtrusionNormalEdVertexAttribute)) {
+            attr->setSharedRawData(bucket.sharedNormalVertices,
+                                   offsetof(FillExtrusionLayoutNormalVertex, a1),
+                                   /*vertexOffset=*/0,
+                                   sizeof(FillExtrusionLayoutNormalVertex),
+                                   gfx::AttributeDataType::Short4);
+        }
+#else
         if (const auto& attr = vertexAttrs->set(idFillExtrusionPosVertexAttribute)) {
             attr->setSharedRawData(bucket.sharedVertices,
                                    offsetof(FillExtrusionLayoutVertex, a1),
@@ -289,6 +310,7 @@ void RenderFillExtrusionLayer::update(gfx::ShaderRegistry& shaders,
                                    sizeof(FillExtrusionLayoutVertex),
                                    gfx::AttributeDataType::Short4);
         }
+#endif
 
         if (doDepthPass) {
             depthBuilder->setRawVertices({}, vertexCount, gfx::AttributeDataType::Short2);

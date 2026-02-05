@@ -53,7 +53,12 @@ FillExtrusionBucket::FillExtrusionBucket(
 }
 
 FillExtrusionBucket::~FillExtrusionBucket() {
+#ifdef USE_FILL_EXTRUSION_POS_BUFFER
+    sharedPosVertices->release();
+    sharedNormalVertices->release();
+#else
     sharedVertices->release();
+#endif
 }
 
 void FillExtrusionBucket::addFeature(const GeometryTileFeature& feature,
@@ -78,7 +83,11 @@ void FillExtrusionBucket::addFeature(const GeometryTileFeature& feature,
         std::vector<uint32_t> flatIndices;
         flatIndices.reserve(totalVertices);
 
+#ifdef USE_FILL_EXTRUSION_POS_BUFFER
+        std::size_t startVertices = posVertices.elements();
+#else
         std::size_t startVertices = vertices.elements();
+#endif
 
         if (triangleSegments.empty() || triangleSegments.back().vertexLength + (5 * (totalVertices - 1) + 1) >
                                             std::numeric_limits<uint16_t>::max()) {
@@ -101,8 +110,14 @@ void FillExtrusionBucket::addFeature(const GeometryTileFeature& feature,
             for (std::size_t i = 0; i < nVertices; i++) {
                 const auto& p1 = ring[i];
 
+#ifdef USE_FILL_EXTRUSION_POS_BUFFER
+                posVertices.emplace_back(FillExtrusionBucket::layoutPosVertex(p1));
+                normalVertices.emplace_back(
+                    FillExtrusionBucket::layoutNormalVertex(0, 0, 1, 1, static_cast<uint16_t>(edgeDistance)));
+#else
                 vertices.emplace_back(
                     FillExtrusionBucket::layoutVertex(p1, 0, 0, 1, 1, static_cast<uint16_t>(edgeDistance)));
+#endif
                 flatIndices.emplace_back(triangleIndex);
                 triangleIndex++;
 
@@ -118,6 +133,25 @@ void FillExtrusionBucket::addFeature(const GeometryTileFeature& feature,
                         edgeDistance = 0;
                     }
 
+#ifdef USE_FILL_EXTRUSION_POS_BUFFER
+                    posVertices.emplace_back(FillExtrusionBucket::layoutPosVertex(p1));
+                    normalVertices.emplace_back(FillExtrusionBucket::layoutNormalVertex(
+                        perp.x, perp.y, 0, 0, static_cast<uint16_t>(edgeDistance)));
+
+                    posVertices.emplace_back(FillExtrusionBucket::layoutPosVertex(p1));
+                    normalVertices.emplace_back(FillExtrusionBucket::layoutNormalVertex(
+                        perp.x, perp.y, 0, 1, static_cast<uint16_t>(edgeDistance)));
+
+                    edgeDistance += dist;
+
+                    posVertices.emplace_back(FillExtrusionBucket::layoutPosVertex(p1));
+                    normalVertices.emplace_back(FillExtrusionBucket::layoutNormalVertex(
+                        perp.x, perp.y, 0, 0, static_cast<uint16_t>(edgeDistance)));
+
+                    posVertices.emplace_back(FillExtrusionBucket::layoutPosVertex(p1));
+                    normalVertices.emplace_back(FillExtrusionBucket::layoutNormalVertex(
+                        perp.x, perp.y, 0, 1, static_cast<uint16_t>(edgeDistance)));
+#else
                     vertices.emplace_back(FillExtrusionBucket::layoutVertex(
                         p1, perp.x, perp.y, 0, 0, static_cast<uint16_t>(edgeDistance)));
                     vertices.emplace_back(FillExtrusionBucket::layoutVertex(
@@ -129,7 +163,7 @@ void FillExtrusionBucket::addFeature(const GeometryTileFeature& feature,
                         p2, perp.x, perp.y, 0, 0, static_cast<uint16_t>(edgeDistance)));
                     vertices.emplace_back(FillExtrusionBucket::layoutVertex(
                         p2, perp.x, perp.y, 0, 1, static_cast<uint16_t>(edgeDistance)));
-
+#endif
                     // ┌──────┐
                     // │ 0  1 │ Counter-Clockwise winding order.
                     // │      │ Triangle 1: 0 => 2 => 1
@@ -160,6 +194,11 @@ void FillExtrusionBucket::addFeature(const GeometryTileFeature& feature,
         triangleSegment.indexLength += nIndices;
     }
 
+#ifdef USE_FILL_EXTRUSION_POS_BUFFER
+    auto& vertices = posVertices;
+#endif
+
+    return;
     for (auto& pair : paintPropertyBinders) {
         const auto it = patternDependencies.find(pair.first);
         if (it != patternDependencies.end()) {
@@ -194,7 +233,12 @@ void FillExtrusionBucket::update(const FeatureStates& states,
         it->second.updateVertexVectors(states, layer, imagePositions);
         uploaded = false;
 
+#ifdef USE_FILL_EXTRUSION_POS_BUFFER
+        sharedPosVertices->updateModified();
+        sharedNormalVertices->updateModified();
+#else
         sharedVertices->updateModified();
+#endif
     }
 }
 
