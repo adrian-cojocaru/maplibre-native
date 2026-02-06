@@ -33,6 +33,12 @@ android {
 
         manifestPlaceholders["SENTRY_DSN"] = ""
         manifestPlaceholders["SENTRY_ENV"] = ""
+
+        ndk {
+            //noinspection ChromeOsAbiSupport
+            abiFilters.clear()
+            abiFilters += listOf("arm64-v8a")
+        }
     }
 
     nativeBuild(listOf("example-custom-layer"))
@@ -40,6 +46,8 @@ android {
     packaging {
         resources.excludes += listOf("META-INF/LICENSE.txt", "META-INF/NOTICE.txt", "LICENSE.txt")
     }
+
+    packagingOptions.jniLibs.useLegacyPackaging = true
 
     buildTypes {
         getByName("debug") {
@@ -61,11 +69,23 @@ android {
         }
 
         getByName("release") {
+            //isDebuggable = true
+            //isJniDebuggable = true
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
             testProguardFiles("test-proguard-rules.pro")
             signingConfig = signingConfigs.getByName("debug")
+
+//            packaging {
+//                jniLibs {
+//                    keepDebugSymbols += "**/*.so"
+//                }
+//            }
+//
+//            ndk {
+//                debugSymbolLevel = "FULL"
+//            }
 
             buildConfigField("String", "SENTRY_DSN", "\"" + (System.getenv("SENTRY_DSN") ?: "") + "\"")
             manifestPlaceholders["SENTRY_DSN"] = System.getenv("SENTRY_DSN") ?: ""
@@ -89,7 +109,8 @@ android {
             dimension = "renderer"
             externalNativeBuild {
                 cmake {
-                    arguments("-DMLN_WITH_OPENGL=OFF", "-DMLN_WITH_VULKAN=ON")
+                    arguments("-DMLN_WITH_OPENGL=OFF", "-DMLN_WITH_VULKAN=ON",
+                        "-DANDROID_STL=c++_shared", "-DANDROID_SANITIZE=hwaddress")
                 }
             }
         }
