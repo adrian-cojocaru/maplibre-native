@@ -9,7 +9,7 @@
 #include <mbgl/shaders/segment.hpp>
 #include <mbgl/style/layers/fill_extrusion_layer_properties.hpp>
 
-#define USE_FILL_EXTRUSION_POS_BUFFER
+// #define USE_FILL_EXTRUSION_POS_BUFFER
 
 namespace mbgl {
 

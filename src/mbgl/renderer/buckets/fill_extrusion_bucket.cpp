@@ -198,7 +198,6 @@ void FillExtrusionBucket::addFeature(const GeometryTileFeature& feature,
     auto& vertices = posVertices;
 #endif
 
-    return;
     for (auto& pair : paintPropertyBinders) {
         const auto it = patternDependencies.find(pair.first);
         if (it != patternDependencies.end()) {

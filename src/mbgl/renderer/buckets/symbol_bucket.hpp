@@ -15,7 +15,7 @@
 #include <memory>
 #include <vector>
 
-#define USE_SYMBOL_POS_BUFFER
+// #define USE_SYMBOL_POS_BUFFER
 
 namespace mbgl {
 
@@ -428,6 +428,8 @@ public:
         std::shared_ptr<DataVertexVector> sharedDataVertices = std::make_shared<DataVertexVector>();
         DataVertexVector& dataVertices() { return *sharedDataVertices; }
         const DataVertexVector& dataVertices() const { return *sharedDataVertices; }
+
+        PosVertexVector& vertices() { return *sharedPosVertices; }
 #else
         std::shared_ptr<VertexVector> sharedVertices = std::make_shared<VertexVector>();
         VertexVector& vertices() { return *sharedVertices; }

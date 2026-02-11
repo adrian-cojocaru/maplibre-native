@@ -331,7 +331,7 @@ void updateTileAttributes(const SymbolBucket::Buffer& buffer,
                                gfx::AttributeDataType::Float);
     }
 
-    // TODO find paintProps.textBinders.sharedVector updateds
+    // TODO find paintProps.textBinders.sharedVector updates
     // TODO move <TextOpacity, TextColor, TextHaloColor, TextHaloWidth, TextHaloBlur>
     // to a block vector
     if (isText) {

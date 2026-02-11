@@ -8,7 +8,7 @@
 #include <source_location>
 
 #ifndef MLN_SYMBOL_GUARDS
-#define MLN_SYMBOL_GUARDS 0
+#define MLN_SYMBOL_GUARDS 1
 #endif
 
 #if MLN_SYMBOL_GUARDS
