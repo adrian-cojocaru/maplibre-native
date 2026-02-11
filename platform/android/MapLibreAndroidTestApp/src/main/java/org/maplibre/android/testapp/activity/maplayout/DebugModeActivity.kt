@@ -1,5 +1,6 @@
 package org.maplibre.android.testapp.activity.maplayout
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.view.*
@@ -8,7 +9,10 @@ import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.*
+import org.maplibre.android.maps.MapLibreMap.CancelableCallback
 import org.maplibre.android.maps.MapLibreMap.OnCameraMoveListener
 import org.maplibre.android.maps.MapLibreMap.OnFpsChangedListener
 import org.maplibre.android.maps.renderer.MapRenderer
@@ -17,8 +21,10 @@ import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.testapp.R
 import org.maplibre.android.testapp.styles.TestStyles
+import org.maplibre.android.testapp.utils.animateCameraSuspend
 import timber.log.Timber
 import java.util.*
+import kotlin.coroutines.resume
 
 /**
  * Test activity showcasing the different debug modes and allows to cycle between the default map styles.
@@ -29,6 +35,7 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
     private var cameraMoveListener: OnCameraMoveListener? = null
     private var actionBarDrawerToggle: ActionBarDrawerToggle? = null
     private var currentStyleIndex = 0
+    private var currentPlaceIndex = 0
     private var isReportFps = true
     private var isContinuousRendering = false
     private var fpsView: TextView? = null
@@ -58,8 +65,10 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
         }
     }
 
+    @SuppressLint("DefaultLocale")
     private fun setupMapView(savedInstanceState: Bundle?) {
         val maplibreMapOptions = setupMapLibreMapOptions()
+        maplibreMapOptions.textureMode(true)
         mapView = MapView(this, maplibreMapOptions)
         (findViewById<View>(R.id.coordinator_layout) as ViewGroup).addView(mapView, 0)
         mapView.addOnDidFinishLoadingStyleListener {
@@ -71,6 +80,9 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
         mapView.onCreate(savedInstanceState)
         mapView.getMapAsync(this)
         mapView.addOnDidFinishLoadingStyleListener { Timber.d("Style loaded") }
+        mapView.addOnDidFinishRenderingFrameListener { fully: Boolean, stats: RenderingStats ->
+            //Timber.e(String.format("%.6f %.6f", stats.encodingTime, stats.renderingTime))
+        }
     }
 
     protected open fun setupMapLibreMapOptions(): MapLibreMapOptions {
@@ -82,6 +94,7 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
         maplibreMap.setStyle(
             Style.Builder().fromUri(STYLES[currentStyleIndex])
         ) { style: Style -> setupNavigationView(style.layers) }
+        //maplibreMap.setSwapBehaviorFlush(true)
         setupZoomView()
         setFpsView()
     }
@@ -140,8 +153,34 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
         val fabDebug = findViewById<FloatingActionButton>(R.id.fabDebug)
         fabDebug.setOnClickListener { view: View? ->
             if (this::maplibreMap.isInitialized) {
-                maplibreMap.isDebugActive = !maplibreMap.isDebugActive
-                Timber.d("Debug FAB: isDebug Active? %s", maplibreMap.isDebugActive)
+                //maplibreMap.isDebugActive = !maplibreMap.isDebugActive
+                //Timber.d("Debug FAB: isDebug Active? %s", maplibreMap.isDebugActive)
+
+                val PLACES = arrayOf(
+                    LatLng(37.7749, -122.4194), // SF
+                    LatLng(38.9072, -77.0369), // DC
+                    LatLng(52.3702, 4.8952), // AMS
+                    LatLng(60.1699, 24.9384), // HEL
+                )
+
+                currentPlaceIndex++;
+                if (currentPlaceIndex >= PLACES.size) {
+                    currentPlaceIndex = 0
+                }
+
+                maplibreMap.animateCamera(
+                    CameraUpdateFactory.newLatLngZoom(PLACES[currentPlaceIndex], 17.0),
+                    2000, object : CancelableCallback {
+                    var resumed = false
+
+                    override fun onCancel() {
+
+                    }
+
+                    override fun onFinish() {
+
+                    }
+                })
             }
         }
     }
@@ -269,11 +308,9 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
     companion object {
         private val STYLES = arrayOf(
             TestStyles.getPredefinedStyleWithFallback("Streets"),
-            TestStyles.getPredefinedStyleWithFallback("Outdoor"),
-            TestStyles.getPredefinedStyleWithFallback("Bright"),
-            TestStyles.getPredefinedStyleWithFallback("Pastel"),
-            TestStyles.getPredefinedStyleWithFallback("Satellite Hybrid"),
-            TestStyles.getPredefinedStyleWithFallback("Satellite Hybrid")
+            "https://americanamap.org/style.json",
+            "https://maps.geo.us-east-2.amazonaws.com/maps/v0/maps/OpenDataStyle/style-descriptor?key=v1.public.eyJqdGkiOiI1NjY5ZTU4My0yNWQwLTQ5MjctODhkMS03OGUxOTY4Y2RhMzgifR_7GLT66TNRXhZJ4KyJ-GK1TPYD9DaWuc5o6YyVmlikVwMaLvEs_iqkCIydspe_vjmgUVsIQstkGoInXV_nd5CcmqRMMa-_wb66SxDdbeRDvmmkpy2Ow_LX9GJDgL2bbiCws0wupJPFDwWCWFLwpK9ICmzGvNcrPbX5uczOQL0N8V9iUvziA52a1WWkZucIf6MUViFRf3XoFkyAT15Ll0NDypAzY63Bnj8_zS8bOaCvJaQqcXM9lrbTusy8Ftq8cEbbK5aMFapXRjug7qcrzUiQ5sr0g23qdMvnKJQFfo7JuQn8vwAksxrQm6A0ByceEXSfyaBoVpFcTzEclxUomhY.NjAyMWJkZWUtMGMyOS00NmRkLThjZTMtODEyOTkzZTUyMTBi",
+            "https://tiles.openfreemap.org/styles/bright"
         )
     }
 }
