@@ -376,7 +376,8 @@ public:
         (readDataDrivenPaintProperty<DataDrivenPaintProperty>(binders.template get<DataDrivenPaintProperty>(),
                                                               isConstant<DataDrivenPaintProperty>(evaluated),
                                                               propertiesAsUniforms,
-                                                              dataDrivenAttrId),
+                                                              dataDrivenAttrId,
+                                                              binders.interleavedVertexBuffer),
          ...);
     }
 
@@ -399,7 +400,8 @@ public:
         (readDataDrivenPaintProperty<DataDrivenPaintProperty>(binders.template get<DataDrivenPaintProperty>(),
                                                               isConstant<DataDrivenPaintProperty>(evaluated),
                                                               &propertiesAsUniforms,
-                                                              dataDrivenAttrId),
+                                                              dataDrivenAttrId,
+                                                              binders.interleavedVertexBuffer),
          ...);
     }
 
@@ -418,7 +420,8 @@ protected:
     void readDataDrivenPaintProperty(const Binder& binder,
                                      const bool isConstant,
                                      StringIDSetsPair* propertiesAsUniforms,
-                                     size_t& dataDrivenAttrId) {
+                                     size_t& dataDrivenAttrId,
+                                     const InterleavedVertexBuffer& buffer) {
         if (!binder) {
             return;
         }
@@ -431,7 +434,7 @@ protected:
             if (!isConstant && binder->getVertexCount() > 0) {
                 using Attribute = typename DataDrivenPaintProperty::Attribute;
                 if (const auto& attr = set(dataDrivenAttrId)) {
-                    applyPaintProperty<Attribute>(attrIndex, attr, binder);
+                    applyPaintProperty<Attribute>(attrIndex, attr, binder, buffer);
                 }
             } else if (propertiesAsUniforms) {
                 propertiesAsUniforms->first.emplace(attributeName);
@@ -443,7 +446,10 @@ protected:
 
     /// Copy or share the attribute data from a paint property
     template <typename TAttribute, typename TBinder>
-    static void applyPaintProperty(const std::size_t attrIndex, const UniqueVertexAttribute& attrib, TBinder& binder) {
+    static void applyPaintProperty(const std::size_t attrIndex,
+                                   const UniqueVertexAttribute& attrib,
+                                   TBinder& binder,
+                                   [[maybe_unused]] const InterleavedVertexBuffer& buffer) {
         using Type = typename TAttribute::Type; // ::mbgl::gfx::AttributeType<type_, n_>
         using InterpType = ZoomInterpolatedAttributeType<Type>;
 
@@ -452,14 +458,29 @@ protected:
             return;
         }
 
+#ifdef USE_INTERLEAVED_BINDER_BUFFER
         if (const auto& sharedVector = binder->getSharedVertexVector()) {
+            const auto& interleavedSharedVector = buffer.sharedVertexVector;
+            size_t offset = binder->vertexOffset;
+
+            const auto rawSize = static_cast<uint32_t>(buffer.stride);
+            const bool isInterpolated = binder->isInterpolated();
+            const auto dataType = isInterpolated ? InterpType::DataType : Type::DataType;
+            // assert(rawSize == static_cast<uint32_t>(isInterpolated ? sizeof(typename InterpType::Value)
+            //                                                        : sizeof(typename Type::Value)));
+            assert(sharedVector->getRawCount() == binder->getVertexCount());
+            attrib->setSharedRawData(std::move(interleavedSharedVector), offset, 0, rawSize, dataType);
+#else
+        if (const auto& sharedVector = binder->getSharedVertexVector()) {
+            size_t offset = 0;
             const auto rawSize = static_cast<uint32_t>(sharedVector->getRawSize());
             const bool isInterpolated = binder->isInterpolated();
             const auto dataType = isInterpolated ? InterpType::DataType : Type::DataType;
             assert(rawSize == static_cast<uint32_t>(isInterpolated ? sizeof(typename InterpType::Value)
                                                                    : sizeof(typename Type::Value)));
             assert(sharedVector->getRawCount() == binder->getVertexCount());
-            attrib->setSharedRawData(std::move(sharedVector), 0, 0, rawSize, dataType);
+            attrib->setSharedRawData(std::move(sharedVector), offset, 0, rawSize, dataType);
+#endif
         } else {
             const auto vertexCount = binder->getVertexCount();
             for (std::size_t i = 0; i < vertexCount; ++i) {
