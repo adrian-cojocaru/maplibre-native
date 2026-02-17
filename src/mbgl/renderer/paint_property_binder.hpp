@@ -34,16 +34,20 @@ struct InterleavedVertexBuffer {
     std::size_t vertexCount = 0;
 
     gfx::VertexVectorPtr<uint8_t> sharedVertexVector = std::make_shared<gfx::VertexVector<uint8_t>>();
-    gfx::VertexVector<uint8_t>& vertexVector = *sharedVertexVector;
 
     template <typename T>
     void set(std::size_t index, std::size_t offset, const T& value) {
-        memcpy((void*)(vertexVector.data() + stride * index + offset), &value, sizeof(value));
+        memcpy((void*)(sharedVertexVector->data() + stride * index + offset), &value, sizeof(value));
     }
 
     template <typename T>
     const T& get(std::size_t index, std::size_t offset) {
-        return *reinterpret_cast<const T*>(vertexVector.data() + stride * index + offset);
+        return *reinterpret_cast<const T*>(sharedVertexVector->data() + stride * index + offset);
+    }
+
+    void extendVertexFormat(std::size_t size) {
+        // 4 bytes alignment
+        stride += (size + 3) & ~3;
     }
 };
 #endif
@@ -782,11 +786,6 @@ public:
         (void)z; // Workaround for https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56958
 
 #ifdef USE_INTERLEAVED_BINDER_BUFFER
-        const auto align = [](size_t value, size_t mask) -> size_t {
-            mask = mask - 1;
-            return (value + mask) & ~mask;
-        };
-
         (([&] {
              auto& elem = binders.template get<Ps>();
              const auto size = elem->getVertexSize();
@@ -794,15 +793,32 @@ public:
              if (size > 0) {
                  elem->interleavedVertexBuffer = &interleavedVertexBuffer;
                  elem->vertexOffset = interleavedVertexBuffer.stride;
-                 interleavedVertexBuffer.stride += align(size, 4);
+                 interleavedVertexBuffer.extendVertexFormat(size);
              }
          }()),
          ...);
 #endif
     }
 
-    PaintPropertyBinders(PaintPropertyBinders&&) noexcept = default;
+    PaintPropertyBinders(PaintPropertyBinders&& other) noexcept {
+        binders = std::move(other.binders);
+
+#ifdef USE_INTERLEAVED_BINDER_BUFFER
+        interleavedVertexBuffer = std::move(other.interleavedVertexBuffer);
+
+        (([&] {
+             auto& elem = binders.template get<Ps>();
+
+             if (elem->getVertexSize() > 0) {
+                 elem->interleavedVertexBuffer = &interleavedVertexBuffer;
+             }
+         }()),
+         ...);
+#endif
+    }
+
     PaintPropertyBinders(const PaintPropertyBinders&) = delete;
+    ~PaintPropertyBinders() = default;
 
     void populateVertexVectors(const GeometryTileFeature& feature,
                                std::size_t length,
@@ -812,7 +828,7 @@ public:
                                const CanonicalTileID& canonical,
                                const style::expression::Value& formattedSection = {}) {
 #ifdef USE_INTERLEAVED_BINDER_BUFFER
-        interleavedVertexBuffer.vertexVector.extend(
+        interleavedVertexBuffer.sharedVertexVector->extend(
             (length - interleavedVertexBuffer.vertexCount) * interleavedVertexBuffer.stride, {});
 #endif
 
