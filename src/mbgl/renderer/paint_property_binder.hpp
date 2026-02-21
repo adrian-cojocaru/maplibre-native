@@ -37,18 +37,29 @@ struct InterleavedVertexBuffer {
 
     template <typename T>
     void set(std::size_t index, std::size_t offset, const T& value) {
-        memcpy((void*)(sharedVertexVector->data() + stride * index + offset), &value, sizeof(value));
+        auto data = get<T>(index, offset);
+
+        memcpy((void*)&data, &value, sizeof(value));
     }
 
     template <typename T>
     const T& get(std::size_t index, std::size_t offset) {
-        return *reinterpret_cast<const T*>(sharedVertexVector->data() + stride * index + offset);
+        size_t space = sizeof(T);
+        void* data = (void*)(sharedVertexVector->data() + stride * index + offset);
+        void* ptr = std::align(alignof(T), sizeof(T), data, space);
+        assert(ptr);
+
+        return *reinterpret_cast<const T*>(ptr);
     }
 
-    void extendVertexFormat(std::size_t size) {
-        // 4 bytes alignment
-        stride += (size + 3) & ~3;
+    template <typename T>
+    void extendVertexFormat() {
+        constexpr auto alignment = alignof(T) - 1;
+        stride += (sizeof(T) + alignment) & ~alignment;
     }
+
+    // manual alignment needed
+    void extendVertexFormat(std::size_t size) { stride += size; }
 };
 #endif
 
