@@ -24,6 +24,7 @@ dependencies {
     implementation(libs.okhttp3)
     implementation(libs.timber)
     implementation(libs.interpolator)
+    implementation(libs.swappy)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockito)
@@ -78,7 +79,7 @@ android {
             dimension = "renderer"
             externalNativeBuild {
                 cmake {
-                    arguments("-DMLN_WITH_OPENGL=ON")
+                    arguments("-DMLN_WITH_OPENGL=ON", "-DANDROID_STL=c++_shared")
                 }
             }
         }
@@ -86,7 +87,7 @@ android {
             dimension = "renderer"
             externalNativeBuild {
                 cmake {
-                    arguments("-DMLN_WITH_VULKAN=ON")
+                    arguments("-DMLN_WITH_VULKAN=ON", "-DANDROID_STL=c++_shared")
                 }
             }
         }
@@ -150,6 +151,7 @@ android {
 
     buildFeatures {
         buildConfig = true
+        prefab = true
     }
 
     compileOptions {

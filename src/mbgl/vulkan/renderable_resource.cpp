@@ -106,9 +106,11 @@ void SurfaceRenderableResource::initSwapchain(uint32_t w, uint32_t h) {
         }
     }
 
-    uint32_t swapchainImageCount = capabilities.minImageCount + 1;
+    uint32_t swapchainImageCount = capabilities.minImageCount;
     // check surface limits (0 is unlimited)
-    if (capabilities.maxImageCount > 0) swapchainImageCount = std::min(swapchainImageCount, capabilities.maxImageCount);
+    if (capabilities.maxImageCount > 0) {
+        swapchainImageCount = std::min(swapchainImageCount, capabilities.maxImageCount);
+    }
 
     auto swapchainCreateInfo = vk::SwapchainCreateInfoKHR()
                                    .setSurface(surface.get())
@@ -153,16 +155,21 @@ void SurfaceRenderableResource::initSwapchain(uint32_t w, uint32_t h) {
     colorFormat = swapchainCreateInfo.imageFormat;
     extent = swapchainCreateInfo.imageExtent;
 
-    acquireSemaphores.reserve(swapchainImages.size());
     presentSemaphores.reserve(swapchainImages.size());
     for (uint32_t index = 0; index < swapchainImages.size(); ++index) {
-        acquireSemaphores.emplace_back(device->createSemaphoreUnique({}, nullptr, dispatcher));
         presentSemaphores.emplace_back(device->createSemaphoreUnique({}, nullptr, dispatcher));
-
-        const auto indexStr = std::to_string(index);
-        backend.setDebugName(acquireSemaphores.back().get(), "PresentSemaphore_" + indexStr);
-        backend.setDebugName(presentSemaphores.back().get(), "AcquireSemaphore_" + indexStr);
+        backend.setDebugName(presentSemaphores.back().get(), "AcquireSemaphore_" + std::to_string(index));
     }
+}
+
+void SurfaceRenderableResource::destroySwapchain() {
+    backend.getDevice()->waitIdle(backend.getDispatcher());
+
+    swapchainFramebuffers.clear();
+    renderPass.reset();
+    swapchainImageViews.clear();
+    swapchainImages.clear();
+    presentSemaphores.clear();
 }
 
 void SurfaceRenderableResource::initDepthStencil() {
@@ -241,17 +248,16 @@ void SurfaceRenderableResource::swap() {
     context.submitFrame();
 }
 
+vk::Result SurfaceRenderableResource::presentFrame(const vk::PresentInfoKHR& info) {
+    return backend.getPresentQueue().presentKHR(info, backend.getDispatcher());
+}
+
 const vk::Image SurfaceRenderableResource::getAcquiredImage() const {
     if (surface) {
         return swapchainImages[acquiredImageIndex];
     }
 
     return colorAllocations[acquiredImageIndex]->image;
-}
-
-const vk::Semaphore& SurfaceRenderableResource::getAcquireSemaphore() const {
-    const auto& context = static_cast<const Context&>(backend.getContext());
-    return acquireSemaphores[context.getCurrentFrameResourceIndex()].get();
 }
 
 const vk::Semaphore& SurfaceRenderableResource::getPresentSemaphore() const {
@@ -401,17 +407,11 @@ void SurfaceRenderableResource::init(uint32_t w, uint32_t h) {
 }
 
 void SurfaceRenderableResource::recreateSwapchain() {
-    if (!surface) return;
+    if (!surface) {
+        return;
+    }
 
-    backend.getDevice()->waitIdle(backend.getDispatcher());
-
-    swapchainFramebuffers.clear();
-    renderPass.reset();
-    swapchainImageViews.clear();
-    swapchainImages.clear();
-    acquireSemaphores.clear();
-    presentSemaphores.clear();
-
+    destroySwapchain();
     init(extent.width, extent.height);
 }
 

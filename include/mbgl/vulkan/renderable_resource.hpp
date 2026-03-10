@@ -40,7 +40,8 @@ protected:
     ~SurfaceRenderableResource() override;
 
     void initColor(uint32_t w, uint32_t h);
-    void initSwapchain(uint32_t w, uint32_t h);
+    virtual void initSwapchain(uint32_t w, uint32_t h);
+    virtual void destroySwapchain();
 
     void initDepthStencil();
 
@@ -58,7 +59,6 @@ public:
     uint32_t getAcquiredImageIndex() const { return acquiredImageIndex; };
     void setAcquiredImageIndex(uint32_t index) { acquiredImageIndex = index; };
     const vk::Image getAcquiredImage() const;
-    const vk::Semaphore& getAcquireSemaphore() const;
     const vk::Semaphore& getPresentSemaphore() const;
 
     bool hasSurfaceTransformSupport() const;
@@ -72,6 +72,7 @@ public:
 
     void init(uint32_t w, uint32_t h);
     void recreateSwapchain();
+    virtual vk::Result presentFrame(const vk::PresentInfoKHR& info);
 
 protected:
     vk::UniqueSurfaceKHR surface;
@@ -88,7 +89,6 @@ protected:
     std::vector<vk::Image> swapchainImages;
     std::vector<vk::UniqueImageView> swapchainImageViews;
     std::vector<vk::UniqueFramebuffer> swapchainFramebuffers;
-    std::vector<vk::UniqueSemaphore> acquireSemaphores;
     std::vector<vk::UniqueSemaphore> presentSemaphores;
     vk::Format colorFormat{vk::Format::eUndefined};
 

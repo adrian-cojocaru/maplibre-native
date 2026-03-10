@@ -118,12 +118,14 @@ void Context::initFrameResources() {
     for (uint32_t index = 0; index < frameCount; ++index) {
         frameResources.emplace_back(
             commandBuffers[index],
-            device->createFenceUnique(vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled), nullptr, dispatcher));
+            device->createFenceUnique(vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled), nullptr, dispatcher),
+            device->createSemaphoreUnique({}, nullptr, dispatcher));
 
         const auto& frame = frameResources.back();
 
         backend.setDebugName(frame.commandBuffer.get(), "FrameCommandBuffer_" + std::to_string(index));
-        backend.setDebugName(frame.flightFrameFence.get(), "FrameFence_" + std::to_string(index));
+        backend.setDebugName(frame.fence.get(), "FrameFence_" + std::to_string(index));
+        backend.setDebugName(frame.acquireSemaphore.get(), "AcquireSemaphore" + std::to_string(index));
     }
 
     // force placeholder texture upload before any descriptor sets
@@ -239,13 +241,15 @@ void Context::waitFrame() const {
 
     const auto& device = backend.getDevice();
     const auto& dispatcher = backend.getDispatcher();
-    auto& frame = frameResources[frameResourceIndex];
+    const auto& fence = frameResources[frameResourceIndex].fence.get();
     constexpr uint64_t timeout = std::numeric_limits<uint64_t>::max();
 
-    const vk::Result waitFenceResult = device->waitForFences(
-        1, &frame.flightFrameFence.get(), VK_TRUE, timeout, dispatcher);
-    if (waitFenceResult != vk::Result::eSuccess) {
+    if (device->waitForFences(1, &fence, VK_TRUE, timeout, dispatcher) != vk::Result::eSuccess) {
         mbgl::Log::Error(mbgl::Event::Render, "Wait fence failed");
+    }
+
+    if (device->resetFences(1, &fence, dispatcher) != vk::Result::eSuccess) {
+        mbgl::Log::Error(mbgl::Event::Render, "Reset fence failed");
     }
 }
 
@@ -309,11 +313,7 @@ void Context::beginFrame() {
         MLN_TRACE_ZONE(acquireNextImageKHR);
         try {
             const vk::ResultValue acquireImageResult = device->acquireNextImageKHR(
-                renderableResource.getSwapchain().get(),
-                timeout,
-                renderableResource.getAcquireSemaphore(),
-                nullptr,
-                dispatcher);
+                renderableResource.getSwapchain().get(), timeout, frame.acquireSemaphore.get(), nullptr, dispatcher);
 
             if (acquireImageResult.result == vk::Result::eSuccess) {
                 renderableResource.setAcquiredImageIndex(acquireImageResult.value);
@@ -348,10 +348,9 @@ void Context::submitFrame() {
 #endif
 
     const auto& dispatcher = backend.getDispatcher();
-    const auto& frame = frameResources[frameResourceIndex];
+    auto& frame = frameResources[frameResourceIndex];
     frame.commandBuffer->end(dispatcher);
 
-    const auto& device = backend.getDevice();
     const auto& graphicsQueue = backend.getGraphicsQueue();
     auto& renderableResource = backend.getDefaultRenderable().getResource<SurfaceRenderableResource>();
     const auto& platformSurface = renderableResource.getPlatformSurface();
@@ -362,16 +361,11 @@ void Context::submitFrame() {
 
     if (platformSurface) {
         submitInfo.setSignalSemaphores(renderableResource.getPresentSemaphore())
-            .setWaitSemaphores(renderableResource.getAcquireSemaphore())
+            .setWaitSemaphores(frame.acquireSemaphore.get())
             .setWaitDstStageMask(waitStageMask);
     }
 
-    const vk::Result resetFenceResult = device->resetFences(1, &frame.flightFrameFence.get(), dispatcher);
-    if (resetFenceResult != vk::Result::eSuccess) {
-        mbgl::Log::Error(mbgl::Event::Render, "Reset fence failed");
-    }
-
-    graphicsQueue.submit(submitInfo, frame.flightFrameFence.get(), dispatcher);
+    graphicsQueue.submit(submitInfo, frame.fence.get(), dispatcher);
 
     // present rendered frame
     if (platformSurface) {
@@ -382,8 +376,7 @@ void Context::submitFrame() {
                                      .setImageIndices(acquiredImage);
 
         try {
-            const auto& presentQueue = backend.getPresentQueue();
-            const vk::Result presentResult = presentQueue.presentKHR(presentInfo, dispatcher);
+            const vk::Result presentResult = renderableResource.presentFrame(presentInfo);
             if (presentResult == vk::Result::eSuboptimalKHR) {
                 requestSurfaceUpdate();
             }

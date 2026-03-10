@@ -5,6 +5,8 @@ project(MapLibreAndroid)
 add_subdirectory(../../../../../
                  ../../../../../${ANDROID_ABI})
 
+find_package(games-frame-pacing REQUIRED CONFIG)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -239,6 +241,8 @@ target_link_libraries(maplibre
                               $<$<CONFIG:Release>:-fuse-ld=gold>
                               MapLibreNative::Base::jni.hpp
                               mbgl-core
-                              mbgl-vendor-unique_resource)
+                              mbgl-vendor-unique_resource
+                              games-frame-pacing::swappy_static
+)
 
 install(TARGETS maplibre LIBRARY DESTINATION lib)

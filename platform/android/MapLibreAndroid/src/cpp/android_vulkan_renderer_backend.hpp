@@ -15,7 +15,6 @@ public:
     AndroidVulkanRendererBackend(ANativeWindow*);
     ~AndroidVulkanRendererBackend() override;
 
-    ANativeWindow* getWindow() { return window; }
     mbgl::gfx::RendererBackend& getImpl() override { return *this; }
 
     std::vector<const char*> getInstanceExtensions() override;
@@ -34,9 +33,6 @@ protected:
     void deactivate() override {
         // no-op
     }
-
-protected:
-    ANativeWindow* window;
 };
 
 } // namespace android

@@ -26,6 +26,7 @@ assertj = "3.26.3"
 gradleNexus = "2.0.0"
 multidex = "2.0.1"
 kotlinxCoroutines = { strictly = "[1.0, 2.0[" }
+swappy = "2.3.0-alpha01"
 
 androidGradlePlugin = "8.6.0"
 
@@ -63,6 +64,7 @@ commonsIO = { group = "commons-io", name = "commons-io", version.ref = "commonsI
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 okhttp3 = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 leakCanary = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "leakCanary" }
+swappy = { group = "androidx.games", name = "games-frame-pacing", version.ref = "swappy" }
 
 kotlinPlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 licensesPlugin = { group = "com.jaredsburrows", name = "gradle-license-plugin", version.ref = "licenses" }

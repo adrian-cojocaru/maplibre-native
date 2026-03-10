@@ -177,6 +177,8 @@ std::vector<const char*> RendererBackend::getDebugExtensions() {
         }
     }
 
+    extensions.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
+
     return extensions;
 }
 
@@ -437,16 +439,19 @@ void RendererBackend::initInstance() {
     const auto& debugExtensions = getDebugExtensions();
     extensions.insert(extensions.end(), debugExtensions.begin(), debugExtensions.end());
 
+    std::vector<vk::ValidationFeatureEnableEXT> validationFeatures;
+
+    validationFeatures.push_back(vk::ValidationFeatureEnableEXT::eBestPractices);
+    validationFeatures.push_back(vk::ValidationFeatureEnableEXT::eSynchronizationValidation);
+
 #ifdef ENABLE_VULKAN_GPU_ASSISTED_VALIDATION
     appInfo.setApiVersion(VK_API_VERSION_1_1);
-
-    const std::array<vk::ValidationFeatureEnableEXT, 2> validationFeatures = {
-        vk::ValidationFeatureEnableEXT::eGpuAssisted, vk::ValidationFeatureEnableEXT::eGpuAssistedReserveBindingSlot};
-    const vk::ValidationFeaturesEXT validationFeatureInfo(validationFeatures);
-
-    createInfo.setPNext(&validationFeatureInfo);
+    validationFeatures.push_back(vk::ValidationFeatureEnableEXT::eGpuAssisted);
+    validationFeatures.push_back(vk::ValidationFeatureEnableEXT::eGpuAssistedReserveBindingSlot);
 #endif
 
+    const vk::ValidationFeaturesEXT validationFeatureInfo(validationFeatures);
+    createInfo.setPNext(&validationFeatureInfo);
 #endif
 
     if (extensionsAvailable) {

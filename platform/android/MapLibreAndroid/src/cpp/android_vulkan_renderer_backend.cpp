@@ -7,13 +7,25 @@
 #include <cassert>
 #include <vulkan/vulkan_android.h>
 
+#define ENABLE_SWAPPY
+
+#ifdef ENABLE_SWAPPY
+#include <swappy/swappyVk.h>
+#include <jni/jni.hpp>
+#endif
+
 namespace mbgl {
 namespace android {
 
+#ifdef ENABLE_SWAPPY
+extern JavaVM* _jvm;
+#endif
+
 class AndroidVulkanRenderableResource final : public mbgl::vulkan::SurfaceRenderableResource {
 public:
-    AndroidVulkanRenderableResource(AndroidVulkanRendererBackend& backend_)
-        : SurfaceRenderableResource(backend_) {}
+    AndroidVulkanRenderableResource(AndroidVulkanRendererBackend& backend_, ANativeWindow* window_)
+        : SurfaceRenderableResource(backend_),
+          window(window_) {}
 
     std::vector<const char*> getDeviceExtensions() override {
         return {
@@ -22,16 +34,80 @@ public:
     }
 
     void createPlatformSurface() override {
-        auto& backendImpl = static_cast<AndroidVulkanRendererBackend&>(backend);
-        const vk::AndroidSurfaceCreateInfoKHR createInfo({}, backendImpl.getWindow());
-        surface = backendImpl.getInstance()->createAndroidSurfaceKHRUnique(
-            createInfo, nullptr, backendImpl.getDispatcher());
+        const vk::AndroidSurfaceCreateInfoKHR createInfo({}, window);
+        surface = backend.getInstance()->createAndroidSurfaceKHRUnique(createInfo, nullptr, backend.getDispatcher());
 
         const int apiLevel = android_get_device_api_level();
         if (apiLevel < __ANDROID_API_Q__) {
             setSurfaceTransformPollingInterval(30);
         }
     }
+
+#ifdef ENABLE_SWAPPY
+    ~AndroidVulkanRenderableResource() override { destroySwapchain(); }
+
+    void initSwapchain(uint32_t w, uint32_t h) override {
+        vulkan::SurfaceRenderableResource::initSwapchain(w, h);
+
+        if (!surface) {
+            return;
+        }
+
+        uint64_t refreshDuration; // nano
+#if 1
+        JNIEnv* env = nullptr;
+        auto status = _jvm->GetEnv((void**)&env, JNI_VERSION_1_6);
+        if (status == JNI_EDETACHED) {
+            _jvm->AttachCurrentThread(&env, nullptr);
+        }
+
+        jclass activity = env->FindClass("org/maplibre/android/testapp/activity/maplayout/DebugModeActivity");
+        jmethodID method = env->GetStaticMethodID(activity, "getThis", "()Landroid/app/Activity;");
+        jobject jactivity = env->NewGlobalRef(env->CallStaticObjectMethod(activity, method));
+
+        if (status == JNI_EDETACHED) {
+            _jvm->DetachCurrentThread();
+        }
+#endif
+
+        SwappyVk_setQueueFamilyIndex(backend.getDevice().get().operator VkDevice(),
+                                     backend.getPresentQueue().operator VkQueue(),
+                                     backend.getPresentQueueIndex());
+
+        SwappyVk_initAndGetRefreshCycleDuration(env,
+                                                jactivity,
+                                                backend.getPhysicalDevice().operator VkPhysicalDevice(),
+                                                backend.getDevice().get().operator VkDevice(),
+                                                swapchain.get().operator VkSwapchainKHR(),
+                                                &refreshDuration);
+
+        SwappyVk_setWindow(
+            backend.getDevice().get().operator VkDevice(), swapchain.get().operator VkSwapchainKHR(), window);
+
+        // TODO query SwappyVk_getSupportedRefreshPeriodsNS()
+
+        SwappyVk_setSwapIntervalNS(backend.getDevice().get().operator VkDevice(),
+                                   swapchain.get().operator VkSwapchainKHR(),
+                                   SWAPPY_SWAP_60FPS);
+    }
+
+    void destroySwapchain() override {
+        if (surface) {
+            backend.getDevice()->waitIdle(backend.getDispatcher());
+            SwappyVk_destroySwapchain(backend.getDevice().get().operator VkDevice(),
+                                      swapchain.get().operator VkSwapchainKHR());
+        }
+
+        vulkan::SurfaceRenderableResource::destroySwapchain();
+    }
+
+    // TODO this throws validation errors with current presentSemaphore[swapImageCount] and
+    // double buffered frame resources
+    vk::Result presentFrame(const vk::PresentInfoKHR& info) override {
+        const auto pInfo = &info.operator const VkPresentInfoKHR&();
+        return vk::Result(SwappyVk_queuePresent(backend.getPresentQueue().operator VkQueue(), pInfo));
+    }
+#endif
 
     void bind() override {}
     void swap() override {
@@ -44,12 +120,12 @@ public:
     }
 
 private:
+    ANativeWindow* window;
 };
 
 AndroidVulkanRendererBackend::AndroidVulkanRendererBackend(ANativeWindow* window_)
     : vulkan::RendererBackend(gfx::ContextMode::Unique),
-      vulkan::Renderable({64, 64}, std::make_unique<AndroidVulkanRenderableResource>(*this)),
-      window(window_) {
+      vulkan::Renderable({64, 64}, std::make_unique<AndroidVulkanRenderableResource>(*this, window_)) {
     init();
 }
 

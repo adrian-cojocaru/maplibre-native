@@ -63,6 +63,8 @@
 namespace mbgl {
 namespace android {
 
+JavaVM* _jvm;
+
 void RegisterNativeHTTPRequest(JNIEnv&);
 
 void registerNatives(JavaVM* vm) {
@@ -173,6 +175,8 @@ void registerNatives(JavaVM* vm) {
     // Util
     DefaultStyle::registerNative(env);
     TileServerOptions::registerNative(env);
+
+    _jvm = theJVM;
 }
 
 } // namespace android

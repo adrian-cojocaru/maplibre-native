@@ -1,5 +1,7 @@
 package org.maplibre.android.testapp.activity.maplayout
 
+import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.os.Bundle
 import android.view.*
@@ -32,7 +34,11 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
     private var isReportFps = true
     private var isContinuousRendering = false
     private var fpsView: TextView? = null
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        _this = this;
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_debug_mode)
         setupToolbar()
@@ -266,6 +272,8 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
         }
     }
 
+    @SuppressLint("StaticFieldLeak")
+
     companion object {
         private val STYLES = arrayOf(
             TestStyles.getPredefinedStyleWithFallback("Streets"),
@@ -275,5 +283,11 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
             TestStyles.getPredefinedStyleWithFallback("Satellite Hybrid"),
             TestStyles.getPredefinedStyleWithFallback("Satellite Hybrid")
         )
+
+        @SuppressLint("StaticFieldLeak")
+        @JvmStatic
+        public lateinit var _this: Activity;
+        @JvmStatic
+        fun getThis(): Activity { return _this; }
     }
 }

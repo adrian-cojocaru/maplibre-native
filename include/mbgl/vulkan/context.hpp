@@ -160,13 +160,15 @@ public:
 private:
     struct FrameResources {
         vk::UniqueCommandBuffer commandBuffer;
-        vk::UniqueFence flightFrameFence;
+        vk::UniqueFence fence;
+        vk::UniqueSemaphore acquireSemaphore;
 
         DeletionQueue deletionQueue;
 
-        FrameResources(vk::UniqueCommandBuffer& cb, vk::UniqueFence&& flight)
+        FrameResources(vk::UniqueCommandBuffer& cb, vk::UniqueFence&& f, vk::UniqueSemaphore&& as)
             : commandBuffer(std::move(cb)),
-              flightFrameFence(std::move(flight)) {}
+              fence(std::move(f)),
+              acquireSemaphore(std::move(as)) {}
 
         void runDeletionQueue(Context&);
     };
