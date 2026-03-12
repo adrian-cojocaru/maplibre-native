@@ -247,10 +247,6 @@ void Context::waitFrame() const {
     if (device->waitForFences(1, &fence, VK_TRUE, timeout, dispatcher) != vk::Result::eSuccess) {
         mbgl::Log::Error(mbgl::Event::Render, "Wait fence failed");
     }
-
-    if (device->resetFences(1, &fence, dispatcher) != vk::Result::eSuccess) {
-        mbgl::Log::Error(mbgl::Event::Render, "Reset fence failed");
-    }
 }
 
 void Context::beginFrame() {
@@ -354,6 +350,7 @@ void Context::submitFrame() {
     const auto& graphicsQueue = backend.getGraphicsQueue();
     auto& renderableResource = backend.getDefaultRenderable().getResource<SurfaceRenderableResource>();
     const auto& platformSurface = renderableResource.getPlatformSurface();
+    const auto& fence = frameResources[frameResourceIndex].fence.get();
 
     // submit frame commands
     const vk::PipelineStageFlags waitStageMask[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
@@ -363,6 +360,10 @@ void Context::submitFrame() {
         submitInfo.setSignalSemaphores(renderableResource.getPresentSemaphore())
             .setWaitSemaphores(frame.acquireSemaphore.get())
             .setWaitDstStageMask(waitStageMask);
+    }
+
+    if (backend.getDevice()->resetFences(1, &fence, dispatcher) != vk::Result::eSuccess) {
+        mbgl::Log::Error(mbgl::Event::Render, "Reset fence failed");
     }
 
     graphicsQueue.submit(submitInfo, frame.fence.get(), dispatcher);
