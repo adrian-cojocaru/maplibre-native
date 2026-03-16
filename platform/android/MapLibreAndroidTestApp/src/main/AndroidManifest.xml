@@ -943,6 +943,8 @@
             android:name=".activity.textureview.TextureViewDebugModeActivity"
             android:description="@string/description_textureview_debug"
             android:exported="true"
+            android:screenOrientation="unspecified"
+            android:configChanges="orientation|screenSize"
             android:label="@string/activity_textureview_debug"
             android:launchMode="singleInstance">
             <meta-data

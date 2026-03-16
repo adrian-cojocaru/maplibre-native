@@ -3,9 +3,11 @@ package org.maplibre.android.testapp.activity.maplayout
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.*
 import android.widget.*
+import androidx.annotation.Keep
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
@@ -45,6 +47,10 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
         setupMapView(savedInstanceState)
         setupDebugChangeView()
         setupStyleChangeView()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
     }
 
     private fun setupToolbar() {
@@ -284,9 +290,12 @@ open class DebugModeActivity : AppCompatActivity(), OnMapReadyCallback, OnFpsCha
             TestStyles.getPredefinedStyleWithFallback("Satellite Hybrid")
         )
 
+        @Keep
         @SuppressLint("StaticFieldLeak")
         @JvmStatic
         public lateinit var _this: Activity;
+
+        @Keep
         @JvmStatic
         fun getThis(): Activity { return _this; }
     }
