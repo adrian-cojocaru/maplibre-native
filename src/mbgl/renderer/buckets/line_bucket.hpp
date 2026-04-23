@@ -95,6 +95,20 @@ public:
 
     std::map<std::string, LineBinders> paintPropertyBinders;
 
+    struct {
+        GeometryCollection featureGeometry;
+
+        using VertexVector = gfx::VertexVector<LineLayoutVertex>;
+        const std::shared_ptr<VertexVector> sharedVertices = std::make_shared<VertexVector>();
+        VertexVector& vertices = *sharedVertices;
+
+        using TriangleIndexVector = gfx::IndexVector<gfx::Triangles>;
+        const std::shared_ptr<TriangleIndexVector> sharedTriangles = std::make_shared<TriangleIndexVector>();
+        TriangleIndexVector& triangles = *sharedTriangles;
+
+        SegmentVector segments;
+    } intersections;
+
 private:
     void addGeometry(const GeometryCoordinates&, const GeometryTileFeature&, const CanonicalTileID&);
 
