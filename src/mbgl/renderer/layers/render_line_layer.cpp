@@ -500,6 +500,47 @@ void RenderLineLayer::update(gfx::ShaderRegistry& shaders,
             for (auto& drawable : builder->clearDrawables()) {
                 addDrawable(std::move(drawable), LineLayerTweaker::LineType::Simple);
             }
+
+            #if 1
+            {
+                if (!lineIntersectionShaderGroup) {
+                    lineIntersectionShaderGroup = shaders.getShaderGroup("LineIntersectionShader");
+                    if (!lineIntersectionShaderGroup) {
+                        continue;
+                    }
+                }
+
+                auto shader = lineShaderGroup->getOrCreateShader(context, propertiesAsUniforms, posNormalAttribName);
+                if (!shader) {
+                    continue;
+                }
+
+                auto builder = createLineBuilder("lineIntersection", std::move(shader));
+
+                auto vertexAttrs = context.createVertexAttributeArray();
+                vertexAttrs->readDataDrivenPaintProperties<LineColor,
+                                                           LineBlur,
+                                                           LineOpacity,
+                                                           LineGapWidth,
+                                                           LineOffset,
+                                                           LineWidth,
+                                                           LineFloorWidth,
+                                                           LinePattern>(
+                    paintPropertyBinders, evaluated, propertiesAsUniforms, idLineColorVertexAttribute);
+
+                // vertices, attributes and segments
+                addAttributes(*builder, bucket, std::move(vertexAttrs));
+                builder->setSegments(gfx::Triangles(),
+                                     bucket.intersections.sharedTriangles,
+                                     bucket.intersections.segments.data(),
+                                     bucket.intersections.segments.size());
+
+                builder->flush(context);
+                for (auto& drawable : builder->clearDrawables()) {
+                    addDrawable(std::move(drawable), LineLayerTweaker::LineType::Simple);
+                }
+            }   
+            #endif
         }
     }
 }
