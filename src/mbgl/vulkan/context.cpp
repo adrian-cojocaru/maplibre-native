@@ -236,7 +236,7 @@ void Context::requestSurfaceUpdate(bool useDelay) {
     surfaceUpdateLatency = useDelay ? backend.getMaxFrames() * 3 : 0;
 }
 
-void Context::waitFrame() const {
+bool Context::waitFrame() const {
     MLN_TRACE_FUNC();
     MBGL_VERIFY_THREAD(tid);
 
@@ -249,7 +249,10 @@ void Context::waitFrame() const {
         1, &frame.flightFrameFence.get(), VK_TRUE, timeout, dispatcher);
     if (waitFenceResult != vk::Result::eSuccess) {
         mbgl::Log::Error(mbgl::Event::Render, "Wait fence failed");
+        return false;
     }
+
+    return true;
 }
 
 void Context::beginFrame() {
@@ -304,7 +307,9 @@ void Context::beginFrame() {
     auto& frame = frameResources[frameResourceIndex];
     constexpr uint64_t timeout = std::numeric_limits<uint64_t>::max();
 
-    waitFrame();
+    if (!waitFrame()) {
+        return;
+    }
 
     frame.runDeletionQueue(*this);
 
@@ -323,6 +328,10 @@ void Context::beginFrame() {
             } else if (acquireImageResult.result == vk::Result::eSuboptimalKHR) {
                 renderableResource.setAcquiredImageIndex(acquireImageResult.value);
                 requestSurfaceUpdate();
+            } else {
+                mbgl::Log::Error(
+                    mbgl::Event::Render,
+                    "acquireNextImageKHR result: " + std::to_string(static_cast<int>(acquireImageResult.result)));
             }
 
         } catch (const vk::OutOfDateKHRError& e) {
