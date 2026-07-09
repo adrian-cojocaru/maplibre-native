@@ -182,6 +182,7 @@ class NavigationMap : SupportMapFragment(), ProgressChangeListener, MilestoneEve
             LocationComponentActivationOptions
                 .builder(requireContext(), map.style!!)
                 .useDefaultLocationEngine(false)
+                .useSpecializedLocationLayer(true)
                 .build()
         )
 
