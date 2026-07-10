@@ -662,7 +662,7 @@ const std::unique_ptr<BufferResource>& Context::getDummyBuffer() {
 const std::unique_ptr<Texture2D>& Context::getDummyTexture() {
     if (!dummyTexture2D) {
         const Size size(2, 2);
-        const std::vector<Color> data(4ull * size.width * size.height, Color::white());
+        const std::vector<Color> data(4ull * size.width * size.height, Color::green());
 
         dummyTexture2D = std::make_unique<Texture2D>(*this);
         dummyTexture2D->setFormat(gfx::TexturePixelType::RGBA, gfx::TextureChannelDataType::UnsignedByte);
