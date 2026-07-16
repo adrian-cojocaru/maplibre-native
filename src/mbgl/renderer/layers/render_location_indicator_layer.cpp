@@ -1226,10 +1226,6 @@ void RenderLocationIndicatorLayer::update(gfx::ShaderRegistry& shaders,
             renderImpl->shadowDrawableInfo, "locationShadow", LocationIndicatorComponentType::PuckShadow);
         createQuadDrawable(renderImpl->puckDrawableInfo, "locationPuck", LocationIndicatorComponentType::Puck);
         createQuadDrawable(renderImpl->hatDrawableInfo, "locationPuckHat", LocationIndicatorComponentType::PuckHat);
-
-        localLayerGroup->visitDrawables([&](gfx::Drawable& drawable) {
-            drawable.addTweaker(std::reinterpret_pointer_cast<gfx::DrawableTweaker>(layerTweaker));
-        });
     };
 
     const auto updateCircleDrawable = [&]() {
