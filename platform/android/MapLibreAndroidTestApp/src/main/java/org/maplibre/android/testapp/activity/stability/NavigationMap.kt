@@ -1,15 +1,11 @@
 package org.maplibre.android.testapp.activity.stability
 
-import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.location.Location
 import android.os.Bundle
 import android.os.PersistableBundle
-import android.view.View
-import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -29,7 +25,6 @@ import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.SupportMapFragment
-import org.maplibre.android.testapp.R
 import org.maplibre.android.testapp.activity.stability.LongRunningActivity.Companion.printStats
 import org.maplibre.android.testapp.styles.TestStyles
 import org.maplibre.android.testapp.utils.GeoParseUtil
@@ -85,7 +80,7 @@ class NavigationMap : SupportMapFragment(), ProgressChangeListener, MilestoneEve
         }
 
         private val ROUTE_PROVIDER = RouteProvider.Local
-        private const val ROUTE_UPDATE_INTERVAL = 1.0
+        private const val ROUTE_UPDATE_INTERVAL = 10.0
 
         // used by remote providers
         private val ROUTES = arrayOf(
@@ -171,8 +166,6 @@ class NavigationMap : SupportMapFragment(), ProgressChangeListener, MilestoneEve
             replayRouteLocationEngine.assign(route)
             routeUpdateTimer = route.duration()
             navigation.startNavigation(route)
-
-            startResize()
         }
     }
 
@@ -364,38 +357,6 @@ class NavigationMap : SupportMapFragment(), ProgressChangeListener, MilestoneEve
 
         if (milestone.bannerInstructions.primary().type() == "arrive") {
             startNewRoute()
-        }
-    }
-
-    private var animatedValue: ValueAnimator? = null
-
-    private fun findLayout() : View? {
-        var parent = mapView.parent as LinearLayout
-
-        return parent
-    }
-
-    private fun startResize() {
-        if (this::mapView.isInitialized) {
-            val currentHeight = mapView.height
-            val minValue = currentHeight / 2
-
-            animatedValue = ValueAnimator.ofInt(currentHeight, minValue)
-            animatedValue?.apply {
-                duration = 1000
-                repeatCount = ValueAnimator.INFINITE
-                repeatMode = ValueAnimator.REVERSE
-
-                addUpdateListener { animator ->
-                    val height = animator.animatedValue as Int
-                    val params = mapView.layoutParams as LinearLayout.LayoutParams
-                    params.height = height
-                    params.weight = 0f
-                    mapView.layoutParams = params
-                }
-
-                start()
-            }
         }
     }
 }
