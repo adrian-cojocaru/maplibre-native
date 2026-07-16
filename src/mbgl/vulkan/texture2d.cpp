@@ -406,7 +406,7 @@ void Texture2D::createSampler() {
     auto samplerCreateInfo = vk::SamplerCreateInfo()
                                  .setMinFilter(filter)
                                  .setMagFilter(filter)
-                                 .setMinLod(-VK_LOD_CLAMP_NONE)
+                                 .setMinLod(0.0f)
                                  .setMaxLod(VK_LOD_CLAMP_NONE)
                                  .setAddressModeU(addressModeU)
                                  .setAddressModeV(addressModeV)
@@ -782,9 +782,12 @@ void Texture2D::generateMips(const vk::UniqueCommandBuffer& buffer) {
                                 barrier,
                                 dispatcher);
 
+        const int32_t nextMipWidth = std::max(1, mipWidth / 2);
+        const int32_t nextMipHeight = std::max(1, mipHeight / 2);
+
         const auto blit = vk::ImageBlit()
                               .setSrcOffsets({vk::Offset3D{0, 0, 0}, {mipWidth, mipHeight, 1}})
-                              .setDstOffsets({vk::Offset3D{0, 0, 0}, {mipWidth / 2, mipHeight / 2, 1}})
+                              .setDstOffsets({vk::Offset3D{0, 0, 0}, {nextMipWidth, nextMipHeight, 1}})
                               .setSrcSubresource({vk::ImageAspectFlagBits::eColor, i - 1, 0, 1})
                               .setDstSubresource({vk::ImageAspectFlagBits::eColor, i, 0, 1});
 
@@ -809,8 +812,8 @@ void Texture2D::generateMips(const vk::UniqueCommandBuffer& buffer) {
                                 barrier,
                                 dispatcher);
 
-        mipWidth = std::max(1, mipWidth / 2);
-        mipHeight = std::max(1, mipHeight / 2);
+        mipWidth = nextMipWidth;
+        mipHeight = nextMipHeight;
     }
 
     // transition the last mip
@@ -818,7 +821,7 @@ void Texture2D::generateMips(const vk::UniqueCommandBuffer& buffer) {
 
     barrier.setOldLayout(vk::ImageLayout::eTransferDstOptimal)
         .setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-        .setSrcAccessMask(vk::AccessFlagBits::eTransferRead)
+        .setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
         .setDstAccessMask(vk::AccessFlagBits::eShaderRead);
 
     buffer->pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
