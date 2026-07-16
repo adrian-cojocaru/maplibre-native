@@ -56,9 +56,6 @@
 
 #endif
 
-// #define DUPLICATE_VERTEX_ATTRIBS
-// #define USE_DUMMY_TEXTURE
-
 #include <numbers>
 
 using namespace mbgl::platform;
@@ -1195,12 +1192,7 @@ void RenderLocationIndicatorLayer::update(gfx::ShaderRegistry& shaders,
             }
 
             {
-#ifdef DUPLICATE_VERTEX_ATTRIBS
-                auto& vertexAttrib1 = vertexAttrib;
-#else
-                auto vertexAttrib1 = context.createVertexAttributeArray();
-#endif
-                auto& drawable = getCircleDrawable("locationAccuracyCircleOutline", vertexAttrib1);
+                auto& drawable = getCircleDrawable("locationAccuracyCircleOutline", vertexAttrib);
                 drawable->setType(static_cast<uint8_t>(LocationIndicatorComponentType::CircleOutline));
 
                 std::vector<gfx::Drawable::UniqueDrawSegment> drawSegments;
@@ -1259,14 +1251,6 @@ void RenderLocationIndicatorLayer::update(gfx::ShaderRegistry& shaders,
                 attr->setSharedRawData(
                     verts, 0, 0, sizeof(RenderLocationIndicatorImpl::vec2), gfx::AttributeDataType::Float2);
             }
-
-#ifdef DUPLICATE_VERTEX_ATTRIBS
-            auto& circleVertexAttrs1 = circleOutlineDrawable.getVertexAttributes();
-            if (const auto& attr = circleVertexAttrs1->set(shaders::idLocationIndicatorPosVertexAttribute)) {
-                attr->setSharedRawData(
-                    verts, 0, 0, sizeof(RenderLocationIndicatorImpl::vec2), gfx::AttributeDataType::Float2);
-            }
-#endif
         }
     };
 
@@ -1304,11 +1288,7 @@ void RenderLocationIndicatorLayer::update(gfx::ShaderRegistry& shaders,
                 info.textureInfo.image.reset();
             }
 
-#ifdef USE_DUMMY_TEXTURE
-            drawable.setTexture(nullptr, shaders::idLocationIndicatorTexture);
-#else
             drawable.setTexture(info.textureInfo.texture, shaders::idLocationIndicatorTexture);
-#endif
             info.textureInfo.dirty = false;
         }
     };
