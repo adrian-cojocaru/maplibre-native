@@ -530,11 +530,11 @@ void Context::bindGlobalUniformBuffers(gfx::RenderPass& renderPass) const noexce
 
     auto& renderableResource = renderPassImpl.getDescriptor().renderable.getResource<SurfaceRenderableResource>();
     if (renderableResource.hasSurfaceTransformSupport()) {
-        float surfaceRotation = renderableResource.getRotation();
+        const float surfaceRotation = renderableResource.getRotation();
+        const float sinRot = std::sin(surfaceRotation);
+        const float cosRot = std::cos(surfaceRotation);
 
-        const shaders::GlobalPlatformParamsUBO platformUBO = {
-            /* .rotation0 = */ {cosf(surfaceRotation), -sinf(surfaceRotation)},
-            /* .rotation1 = */ {sinf(surfaceRotation), cosf(surfaceRotation)}};
+        const shaders::GlobalPlatformParamsUBO platformUBO = {.surfaceRotation = {cosRot, -sinRot, sinRot, cosRot}};
         context.globalUniformBuffers.createOrUpdate(
             shaders::idGlobalPlatformParamsUBO, &platformUBO, sizeof(platformUBO), context);
     }
