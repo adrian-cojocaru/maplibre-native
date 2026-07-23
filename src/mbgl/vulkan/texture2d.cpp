@@ -510,11 +510,14 @@ void Texture2D::transitionToTransferReadLayout(const vk::UniqueCommandBuffer& bu
 }
 
 void Texture2D::transitionToShaderReadLayout(const vk::UniqueCommandBuffer& buffer) {
+    const auto srcAccessMask = imageLayout == vk::ImageLayout::eTransferSrcOptimal ? vk::AccessFlagBits::eTransferRead
+                                                                                   : vk::AccessFlagBits::eTransferWrite;
+
     const auto barrier = vk::ImageMemoryBarrier()
                              .setImage(imageAllocation->image)
                              .setOldLayout(imageLayout)
                              .setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-                             .setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
+                             .setSrcAccessMask(srcAccessMask)
                              .setDstAccessMask(vk::AccessFlagBits::eShaderRead)
                              .setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
                              .setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED)
@@ -811,6 +814,7 @@ void Texture2D::generateMips(const vk::UniqueCommandBuffer& buffer) {
     }
 
     // transition image to fragment read
+    imageLayout = vk::ImageLayout::eTransferSrcOptimal;
     transitionToShaderReadLayout(buffer);
 }
 
